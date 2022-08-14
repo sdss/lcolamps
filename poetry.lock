@@ -528,7 +528,7 @@ code_style = ["pre-commit (==2.6)"]
 
 [[package]]
 name = "mdurl"
-version = "0.1.1"
+version = "0.1.2"
 description = "Markdown URL utilities"
 category = "dev"
 optional = false
@@ -890,7 +890,7 @@ docutils = ">=0.11,<1.0"
 
 [[package]]
 name = "sdss-clu"
-version = "1.6.2"
+version = "1.7.0"
 description = "A new protocol for SDSS actors."
 category = "main"
 optional = false
@@ -936,7 +936,7 @@ doc = ["sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "setuptools"
-version = "64.0.3"
+version = "65.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
@@ -1248,7 +1248,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9,<4.0"
-content-hash = "29c4bc7929c40f7aa6143a4845d2a9bc9f9a731adb50f5966ee290c1583381bf"
+content-hash = "c94ddeac04fb2c0774fad1da67919a1a39f7df9de085a88ad23d0e1effd8877f"
 
 [metadata.files]
 aio-pika = [
@@ -1515,8 +1515,8 @@ mdit-py-plugins = [
     {file = "mdit_py_plugins-0.3.0-py3-none-any.whl", hash = "sha256:b1279701cee2dbf50e188d3da5f51fee8d78d038cdf99be57c6b9d1aa93b4073"},
 ]
 mdurl = [
-    {file = "mdurl-0.1.1-py3-none-any.whl", hash = "sha256:6a8f6804087b7128040b2fb2ebe242bdc2affaeaa034d5fc9feeed30b443651b"},
-    {file = "mdurl-0.1.1.tar.gz", hash = "sha256:f79c9709944df218a4cdb0fcc0b0c7ead2f44594e3e84dc566606f04ad749c20"},
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
 ]
 mslex = [
     {file = "mslex-0.3.0-py2.py3-none-any.whl", hash = "sha256:380cb14abf8fabf40e56df5c8b21a6d533dc5cbdcfe42406bbf08dda8f42e42a"},
@@ -1783,8 +1783,8 @@ restructuredtext-lint = [
     {file = "restructuredtext_lint-1.4.0.tar.gz", hash = "sha256:1b235c0c922341ab6c530390892eb9e92f90b9b75046063e047cacfb0f050c45"},
 ]
 sdss-clu = [
-    {file = "sdss-clu-1.6.2.tar.gz", hash = "sha256:172f599caafc35b76b71433297b2dd29a5298f51f3e225ca4893dd5547a3f011"},
-    {file = "sdss_clu-1.6.2-py3-none-any.whl", hash = "sha256:3d58f24f5f441c1f2904d49edbd0ed0875a413b044c6355dedd2ef9127c6acd5"},
+    {file = "sdss-clu-1.7.0.tar.gz", hash = "sha256:b98142c902565251ba7f8b54bb82f79c8746c9ab72bae66b313bf4a436489c26"},
+    {file = "sdss_clu-1.7.0-py3-none-any.whl", hash = "sha256:c63668978c375eb781cd15ed15ea893abbc29dfd2e8dc57b07e2f7bc929af087"},
 ]
 sdsstools = [
     {file = "sdsstools-0.5.2-py3-none-any.whl", hash = "sha256:32ac1ddfb626e16d76850bb62f44b81714fe7ad734d5716921e68c5bc0f844d9"},
@@ -1795,8 +1795,8 @@ semantic-version = [
     {file = "semantic_version-2.10.0.tar.gz", hash = "sha256:bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c"},
 ]
 setuptools = [
-    {file = "setuptools-64.0.3-py3-none-any.whl", hash = "sha256:194b74f2c2d1800268fe2d857d99981e7c04d010de3099f04ee45ebec535e560"},
-    {file = "setuptools-64.0.3.tar.gz", hash = "sha256:3bcaf6e27ad3b0f643ba0a48c5ab9eca930c3eb51df0e068f4826ab880c394ea"},
+    {file = "setuptools-65.0.0-py3-none-any.whl", hash = "sha256:fe9a97f68b064a6ddd4bacfb0b4b93a4c65a556d97ce906255540439d0c35cef"},
+    {file = "setuptools-65.0.0.tar.gz", hash = "sha256:d73f8cd714a1a6691f5eb5abeeacbf313242b7aa2f5eba93776542c1aad90c6f"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
