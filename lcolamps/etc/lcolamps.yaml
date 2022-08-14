@@ -5,3 +5,18 @@ actor:
   tron_host: sdss5-hub
   tron_port: 6093
   log_dir: '/data/logs/actors/{actor_name}/'
+
+m2:
+  host: 139.229.101.51
+  port: 52001
+
+lamps:
+  FF:
+    warm_up_time: 0
+    m2_name: Apg
+  HeAr:
+    warm_up_time: 10
+    m2_name: HeAr
+  Ne:
+    warm_up_time: 10
+    m2_name: Ne
