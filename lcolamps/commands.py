@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from time import time
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, KeysView
 
 import click
 
@@ -109,9 +109,34 @@ async def on(
 
 
 @lamps_parser.command()
-@click.argument("lamp_name", metavar="LAMP", type=str)
-async def off(command: LampsCommand, controller: LampsController, lamp_name: str):
+@click.argument("lamp_name", metavar="LAMP", type=str, required=False)
+@click.option("--all", "all_lamps", is_flag=True, help="Turn off all the lamps.")
+async def off(
+    command: LampsCommand,
+    controller: LampsController,
+    lamp_name: str | None = None,
+    all_lamps: bool = False,
+):
     """Turns off a lamp."""
+
+    if all_lamps is True:
+        results = await asyncio.gather(
+            *[controller.set(lamp_name, False) for lamp_name in controller.lamps],
+            return_exceptions=True,
+        )
+        replies = {}
+        for ii in range(len(controller.lamps)):
+            name = list(controller.lamps)[ii]
+            if isinstance(results[ii], Exception):
+                command.error(f"Failed turning off lamp {name}.")
+                continue
+            replies[name] = "OFF"
+        if len(replies) > 0:
+            command.info(**replies)
+        return command.finish()
+
+    if lamp_name is None:
+        return command.fail("A lamp name is required.")
 
     if lamp_name.lower() not in controller.lamps:
         return command.fail(f"Unknown {lamp_name} lamp.")
