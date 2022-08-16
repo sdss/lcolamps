@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
-    "SQM": { "type": "string", "enum": ["ON", "OFF", "UNKNOWN"] },
-    "FF": { "type": "string", "enum": ["ON", "OFF", "UNKNOWN"] },
-    "Lsr": { "type": "string", "enum": ["ON", "OFF", "UNKNOWN"] },
-    "HgAr": { "type": "string", "enum": ["ON", "OFF", "UNKNOWN"] },
-    "Ne": { "type": "string", "enum": ["ON", "OFF", "UNKNOWN"] }
+    "SQM": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
+    "FF": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
+    "Laser": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
+    "HeAr": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
+    "Ne": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] }
   },
   "additionalProperties": false
 }
