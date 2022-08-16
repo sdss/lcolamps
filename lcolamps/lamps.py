@@ -253,7 +253,7 @@ class LampsController:
         if relay is None:
             raise RuntimeError(f"Missing relay number for lamp {lamp.name}.")
 
-        command = "on" if on else "off"
+        command = "1" if on else "0"
         reply = await self.send_command(f"lamp {relay} {command}")
 
         if (on and m2_name not in reply) or ((on is False and m2_name in reply)):
