@@ -20,3 +20,6 @@ lamps:
   Ne:
     warm_up_time: 10
     m2_name: Ne
+  Laser:
+    warm_up_time: 0
+    m2_name: Lsr
