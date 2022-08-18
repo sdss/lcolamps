@@ -1,7 +1,7 @@
 actor:
   name: lamps
   host: 0.0.0.0
-  port: 19992
+  port: 19981
   tron_host: sdss5-hub
   tron_port: 6093
   log_dir: '/data/logs/actors/{actor_name}/'
