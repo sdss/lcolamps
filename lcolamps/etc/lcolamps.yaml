@@ -7,7 +7,7 @@ actor:
   log_dir: '/data/logs/actors/{actor_name}/'
 
 m2:
-  host: 139.229.101.51
+  host: vinchuca.lco.cl
   port: 52001
 
 lamps:
