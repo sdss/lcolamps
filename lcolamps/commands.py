@@ -85,6 +85,7 @@ async def on(
     if lamp.state & LampState.ON:
         pass
     elif lamp.state & LampState.WARMING:
+        command.info(**{lamp.name: lamp.state.name})
         last_warn = 0
         while True:
             await asyncio.sleep(1)
@@ -93,6 +94,8 @@ async def on(
                 break
 
             if (time() - start_time) > (warm_up_time + 5):
+                lamp.state = LampState.UNKNOWN
+                command.warning(**{lamp.name: LampState.UNKNOWN})
                 return command.fail(f"{lamp.name} timed out warming up.")
 
             if lamp.on_time is not None:
@@ -103,6 +106,7 @@ async def on(
                     last_warn = elapsed_p_round
 
     else:
+        command.warning(**{lamp.name: lamp.state.name})
         return command.fail(f"{lamp.name}: invalid status.")
 
     return command.finish(**{lamp.name: lamp.state.name})
