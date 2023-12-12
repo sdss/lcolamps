@@ -46,7 +46,6 @@ class Lamp:
     state: LampState = LampState.UNKNOWN
 
     def __post_init__(self):
-
         self._warmup_task: asyncio.Task | None = None
 
     def on(self, warm_up_time: float | None = None):
@@ -94,7 +93,6 @@ class LampsController:
         lamps: dict[str, dict] = {},
         actor: LCOLampsActor | None = None,
     ):
-
         self.host = host
         self.port = port
 
@@ -110,7 +108,6 @@ class LampsController:
             self.add_lamp(lamp, **lamps[lamp])
 
     def __repr__(self):
-
         lamps_status = []
         for lamp in self.lamps:
             status = self.lamps[lamp].state.name
@@ -201,7 +198,6 @@ class LampsController:
         status_list = re.findall(r"([A-Za-z0-9]+)=(\d)", status_str)
 
         for index, (m2_name, status_id) in enumerate(status_list):
-
             # Ignore unassigned lamps.
             if re.match("t[0-9]+", m2_name):
                 continue

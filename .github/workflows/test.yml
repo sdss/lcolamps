@@ -2,61 +2,52 @@ name: Test
 
 on:
   push:
-    branches: [main]
     paths-ignore:
       - 'docs/**'
   pull_request:
-    branches: [main]
     paths-ignore:
       - 'docs/**'
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10']
+        python-version: ['3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Cache Setup
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade wheel pip setuptools
           pip install .
 
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
-          pip install flake8
-          flake8 . --count --show-source --statistics
+          pip install ruff
+          ruff check lcolamps/ tests/
 
-      - name: Lint with isort
+      - name: Lint with black
         run: |
-          pip install isort
-          isort -c .
+          pip install black
+          black --check lcolamps/ tests/
 
       - name: Test with pytest
         run: |
-          pip install pytest pytest-cov pytest-asyncio pytest-mock asynctest pytest-sugar
-          pip install coverage[toml]
+          pip install pytest pytest-mock pytest-asyncio pytest-cov
           pytest
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml

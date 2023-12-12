@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from time import time
 
-from typing import TYPE_CHECKING, KeysView
+from typing import TYPE_CHECKING
 
 import click
 

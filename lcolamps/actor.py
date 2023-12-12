@@ -30,7 +30,6 @@ class LCOLampsActor(LegacyActor):
     parser = lamps_parser
 
     def __init__(self, *args, **kwargs):
-
         self.observatory = OBSERVATORY
         # if self.observatory != "LCO":
         #     raise ValueError("lcolamps can only be run at LCO.")
