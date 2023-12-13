@@ -17,12 +17,12 @@ import click
 
 from clu.parsers.click import command_parser as lamps_parser
 
-from lcolamps.lamps import LampState
+from lcolamps.controller import LampState
 
 
 if TYPE_CHECKING:
     from .actor import LampsCommand
-    from .lamps import LampsController
+    from .controller import LampsController
 
 
 @lamps_parser.command()

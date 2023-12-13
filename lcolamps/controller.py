@@ -3,7 +3,7 @@
 #
 # @Author: José Sánchez-Gallego (gallegoj@uw.edu)
 # @Date: 2022-08-14
-# @Filename: lamps.py
+# @Filename: controller.py
 # @License: BSD 3-clause (http://www.opensource.org/licenses/BSD-3-Clause)
 
 from __future__ import annotations
@@ -15,11 +15,11 @@ import warnings
 from dataclasses import dataclass
 from time import time
 
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
 
 if TYPE_CHECKING:
-    from .actor import LCOLampsActor
+    pass
 
 
 WARM_UP_CALLBACK_CO = Callable[["Lamp"], Any] | None
@@ -34,22 +34,28 @@ class LampState(enum.Flag):
     UNKNOWN = 0x100
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Lamp:
     """One of the connected lamps."""
 
     name: str
-    m2_name: str
-    relay: int | None = None
     warm_up_time: float = 0
-    on_time: float | None = None
-    state: LampState = LampState.UNKNOWN
+
+    mode: ClassVar[str]
 
     def __post_init__(self):
+        self.on_time: float | None = None
+        self.state: LampState = LampState.UNKNOWN
+
         self._warmup_task: asyncio.Task | None = None
 
-    def on(self, warm_up_time: float | None = None):
-        """Sets the lamp as on."""
+    def set_on(self, warm_up_time: float | None = None):
+        """Sets the lamp as on.
+
+        This does not change the actual state of the lamp, just register its
+        status as far as we know.
+
+        """
 
         if self.state & (LampState.ON | LampState.WARMING):
             return
@@ -61,8 +67,13 @@ class Lamp:
 
         self.on_time = time()
 
-    def off(self):
-        """Sets the lamp as off."""
+    def set_off(self):
+        """Sets the lamp as off.
+
+        This does not change the actual state of the lamp, just register its
+        status as far as we know.
+
+        """
 
         if self.state & LampState.OFF:
             return
@@ -83,56 +94,41 @@ class Lamp:
         self._warmup_task = None
 
 
-class LampsController:
-    """Connection to the M2 LCO device."""
+@dataclass(kw_only=True)
+class M2Lamp(Lamp):
+    """An M2 lamp."""
 
-    def __init__(
-        self,
-        host: str,
-        port: int,
-        lamps: dict[str, dict] = {},
-        actor: LCOLampsActor | None = None,
-    ):
-        self.host = host
-        self.port = port
+    m2_name: str
+    relay: int | None = None
 
-        self.actor = actor
+    mode = "m2"
 
+
+@dataclass(kw_only=True)
+class ActorLamp(Lamp):
+    """A lamp that's controlled by another actor."""
+
+    command_on: str
+    command_off: str
+    command_status: str
+    status_keyword: str
+
+    mode = "actor"
+
+
+@dataclass
+class M2Controller:
+    """A controller for the M2 lamps."""
+
+    controller: LampsController
+    host: str
+    port: int
+
+    def __post_init__(self):
         self.writer: asyncio.StreamWriter | None = None
         self.reader: asyncio.StreamReader | None = None
 
-        self.lamps: dict[str, Lamp] = {}
-        self._m2_to_lamp: dict[str, str] = {}
-
-        for lamp in lamps:
-            self.add_lamp(lamp, **lamps[lamp])
-
-    def __repr__(self):
-        lamps_status = []
-        for lamp in self.lamps:
-            status = self.lamps[lamp].state.name
-            lamps_status.append(f"{lamp}={status}")
-
-        lamps_status_str = ", ".join(lamps_status)
-
-        return f"<LampsController ({lamps_status_str})>"
-
-    def add_lamp(
-        self,
-        name: str,
-        m2_name: str,
-        relay: int | None = None,
-        warm_up_time: float = 0.0,
-    ):
-        """Adds a lamp."""
-
-        self.lamps[name.lower()] = Lamp(
-            name=name,
-            m2_name=m2_name,
-            relay=relay,
-            warm_up_time=warm_up_time,
-        )
-        self._m2_to_lamp[m2_name] = name
+        self.lock = asyncio.Lock()
 
     async def connect(self):
         """Connects/reconnects to the server."""
@@ -142,7 +138,8 @@ class LampsController:
 
         try:
             self.reader, self.writer = await asyncio.wait_for(
-                asyncio.open_connection(self.host, self.port), 5
+                asyncio.open_connection(self.host, self.port),
+                timeout=5,
             )
         except asyncio.TimeoutError:
             raise RuntimeError("Timed out connecting to M2 controller.")
@@ -168,30 +165,39 @@ class LampsController:
 
         return self.writer.is_closing()
 
-    async def send_command(self, command: str, disconnect: bool = True):
+    async def send_command(self, command: str):
         """Sends a command to the device and returns the reply."""
 
-        if not self.is_connected():
-            await self.connect()
+        async with self.lock:
+            if not self.is_connected():
+                await self.connect()
 
-        if self.writer is None or self.reader is None:
-            raise RuntimeError("Failed connecting to M2 server.")
+            if self.writer is None or self.reader is None:
+                raise RuntimeError("Failed connecting to M2 server.")
 
-        self.writer.write(command.encode())
-        await self.writer.drain()
+            self.writer.write(command.encode())
+            await self.writer.drain()
 
-        try:
-            reply = await asyncio.wait_for(self.reader.readline(), 3)
-        except TimeoutError:
-            raise RuntimeError(f"Timed out waiting for reply to command {command!r}.")
-        finally:
-            if disconnect:
+            try:
+                reply = await asyncio.wait_for(self.reader.readline(), 3)
+            except TimeoutError:
+                raise RuntimeError(f"Timed out waiting for reply to {command!r}.")
+            finally:
                 await self.disconnect()
 
         return reply.decode().strip()
 
+    def get_m2_lamp(self, m2_name: str):
+        """Returns the lamp with the given M2 name."""
+
+        for lamp in self.controller.lamps.values():
+            if lamp.mode == "m2" and getattr(lamp, "m2_name", "") == m2_name:
+                return lamp
+
+        return None
+
     async def update(self):
-        """Updates the status of the lamps."""
+        """Updates the status of the M2 lamps."""
 
         status_str = await self.send_command("getlamps")
 
@@ -202,27 +208,119 @@ class LampsController:
             if re.match("t[0-9]+", m2_name):
                 continue
 
-            # Add lamp if it's not in our current list.
-            if m2_name not in self._m2_to_lamp:
-                self.add_lamp(m2_name, m2_name=m2_name, relay=index + 1)
+            m2_lamp = self.get_m2_lamp(m2_name)
 
-            lamp_name = self._m2_to_lamp[m2_name].lower()
-            lamp = self.lamps[lamp_name]
+            # Add lamp if it's not in our current list.
+            if m2_lamp is None:
+                m2_lamp = self.controller.add_lamp(
+                    m2_name,
+                    "m2",
+                    m2_name=m2_name,
+                    relay=index + 1,
+                )
+
+            assert isinstance(m2_lamp, M2Lamp)
 
             # If the lamp does not know its relay number, add it.
-            if lamp.relay is None:
-                lamp.relay = index + 1
+            if m2_lamp.relay is None:
+                m2_lamp.relay = index + 1
 
             if status_id == "0":
-                lamp.off()
+                m2_lamp.set_off()
             elif status_id == "1":
-                lamp.on()
+                m2_lamp.set_on()
             else:
                 # Use off because logic is similar but do not notify yet.
-                lamp.off()
-                lamp.state = LampState.UNKNOWN
+                m2_lamp.set_off()
+                m2_lamp.state = LampState.UNKNOWN
 
-    async def set(self, lamp_name, on: bool, warm_up_time: float | None = None):
+    async def set_state(self, lamp: M2Lamp, state: bool):
+        """Turns the lamp on or off."""
+
+        m2_name = lamp.m2_name
+        relay = lamp.relay
+
+        if relay is None:
+            raise RuntimeError(f"Missing relay number for lamp {lamp.name}.")
+
+        command = "1" if state is True else "0"
+        reply = await self.send_command(f"lamp {relay} {command}")
+
+        if (state and m2_name not in reply) or ((state is False and m2_name in reply)):
+            raise ValueError(f"Invalid reply {reply!r}")
+
+        return True
+
+
+class LampsController:
+    """Controller for the lamps.
+
+    Parameters
+    ----------
+    m2_params
+        A tuple with the host and port of the M2 GUI server.
+    lamps
+        A dictionary of lamp name to lamp parameters. The value is passed
+        directly to `.add_lamp`.
+
+    """
+
+    def __init__(
+        self,
+        m2_params: tuple[str, int] | None = None,
+        lamps: dict[str, dict] = {},
+    ):
+        if m2_params:
+            self.m2_controller = M2Controller(self, *m2_params)
+        else:
+            self.m2_controller = None
+
+        self.lamps: dict[str, Lamp] = {}
+        if lamps:
+            for lamp in lamps:
+                self.add_lamp(lamp, **lamps[lamp])
+
+    def __repr__(self):
+        lamps_status = []
+        for lamp in self.lamps:
+            status = self.lamps[lamp].state.name
+            lamps_status.append(f"{lamp}={status}")
+
+        lamps_status_str = ", ".join(lamps_status)
+
+        return f"<LampsController ({lamps_status_str})>"
+
+    def add_lamp(
+        self,
+        name: str,
+        mode: str,
+        **lamp_kwargs,
+    ):
+        """Adds a lamp."""
+
+        if mode == "m2":
+            lamp = M2Lamp(name=name, **lamp_kwargs)
+        elif mode == "actor":
+            lamp = ActorLamp(name=name, **lamp_kwargs)
+        else:
+            raise ValueError('Invalid mode. Must be "m2" or "actor".')
+
+        self.lamps[name.lower()] = lamp
+
+        return lamp
+
+    async def update(self):
+        """Updates the status of the lamps."""
+
+        if self.m2_controller is not None:
+            await self.m2_controller.update()
+
+    async def set_state(
+        self,
+        lamp_name,
+        state: bool,
+        warm_up_time: float | None = None,
+    ):
         """Sets a lamp on or off."""
 
         if lamp_name.lower() not in self.lamps:
@@ -233,9 +331,9 @@ class LampsController:
 
         await self.update()
 
-        if on and (lamp.state & (LampState.ON | LampState.WARMING)):
+        if state and (lamp.state & (LampState.ON | LampState.WARMING)):
             return
-        elif on is False and (lamp.state & LampState.OFF):
+        elif state is False and (lamp.state & LampState.OFF):
             return
         elif lamp.state & LampState.UNKNOWN:
             warnings.warn(
@@ -243,19 +341,12 @@ class LampsController:
                 UserWarning,
             )
 
-        m2_name = lamp.m2_name
-        relay = lamp.relay
+        if isinstance(lamp, M2Lamp):
+            if not self.m2_controller:
+                raise RuntimeError("No M2 controller defined.")
+            await self.m2_controller.set_state(lamp, state)
 
-        if relay is None:
-            raise RuntimeError(f"Missing relay number for lamp {lamp.name}.")
-
-        command = "1" if on else "0"
-        reply = await self.send_command(f"lamp {relay} {command}")
-
-        if (on and m2_name not in reply) or ((on is False and m2_name in reply)):
-            raise ValueError(f"Invalid reply {reply!r}")
-
-        if on:
-            lamp.on(warm_up_time=warm_up_time)
+        if state:
+            lamp.set_on(warm_up_time=warm_up_time)
         else:
-            lamp.off()
+            lamp.set_off()

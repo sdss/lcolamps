@@ -16,7 +16,7 @@ from clu import Command
 from clu.legacy import LegacyActor
 
 from lcolamps import OBSERVATORY, __version__, config
-from lcolamps.lamps import LampsController
+from lcolamps.controller import LampsController
 
 from .commands import lamps_parser  # noqa
 
@@ -31,15 +31,18 @@ class LCOLampsActor(LegacyActor):
 
     def __init__(self, *args, **kwargs):
         self.observatory = OBSERVATORY
-        # if self.observatory != "LCO":
-        #     raise ValueError("lcolamps can only be run at LCO.")
 
         super().__init__(*args, **kwargs)
         self.load_schema(str(pathlib.Path(__file__).parent / "etc/schema.json"))
 
         self.version = __version__
 
-        self.controller = LampsController(**config["m2"], lamps=config["lamps"])
+        if 'm2' in config:
+            m2_params = (config['m2.host'], config['m2.port'])
+        else:
+            m2_params = None
+
+        self.controller = LampsController(m2_params=m2_params, lamps=config["lamps"])
         self.parser_args = [self.controller]
 
     async def start(self: T, **kwargs) -> T:

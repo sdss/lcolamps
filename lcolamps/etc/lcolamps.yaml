@@ -12,14 +12,18 @@ m2:
 
 lamps:
   FF:
+    mode: m2
     warm_up_time: 0
     m2_name: Apg
   HeAr:
+    mode: m2
     warm_up_time: 10
     m2_name: HeAr
   Ne:
+    mode: m2
     warm_up_time: 10
     m2_name: Ne
   Laser:
+    mode: m2
     warm_up_time: 0
     m2_name: Lsr
