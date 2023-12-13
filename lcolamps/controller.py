@@ -17,9 +17,11 @@ from time import time
 
 from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
+from clu.legacy.tron import KeysDictionary, TronKey, TronModel
+
 
 if TYPE_CHECKING:
-    pass
+    from lcolamps.actor import LCOLampsActor
 
 
 WARM_UP_CALLBACK_CO = Callable[["Lamp"], Any] | None
@@ -49,13 +51,18 @@ class Lamp:
 
         self._warmup_task: asyncio.Task | None = None
 
-    def set_on(self, warm_up_time: float | None = None):
+    def _on(self, warm_up_time: float | None = None):
         """Sets the lamp as on.
 
         This does not change the actual state of the lamp, just register its
         status as far as we know.
 
         """
+
+        # If we start with the lamps on, just skip warming.
+        if self.state == LampState.UNKNOWN:
+            self.state = LampState.ON
+            return
 
         if self.state & (LampState.ON | LampState.WARMING):
             return
@@ -67,7 +74,7 @@ class Lamp:
 
         self.on_time = time()
 
-    def set_off(self):
+    def _off(self):
         """Sets the lamp as off.
 
         This does not change the actual state of the lamp, just register its
@@ -108,12 +115,82 @@ class M2Lamp(Lamp):
 class ActorLamp(Lamp):
     """A lamp that's controlled by another actor."""
 
+    actor_name: str
     command_on: str
     command_off: str
     command_status: str
     status_keyword: str
+    actor: LCOLampsActor | None = None
 
     mode = "actor"
+
+    def __post_init__(self):
+        actor_name = self.actor_name
+
+        if self.actor and self.actor.tron:
+            tron = self.actor.tron
+            if actor_name not in tron.models:
+                tron.keyword_dicts[actor_name] = KeysDictionary.load(actor_name)
+
+                model = TronModel(tron.keyword_dicts[actor_name])
+                model[self.status_keyword].register_callback(self._update_state)
+                tron.models[actor_name] = model
+
+        return super().__post_init__()
+
+    def _set_unknown(self, msg: str | None = None):
+        """Sets the state to UNKNOWN."""
+
+        if msg:
+            warnings.warn(msg, UserWarning)
+
+        self.state = LampState.UNKNOWN
+
+    def _update_state(self, key: TronKey):
+        """Sets the state of the lamp based on the lamp keyword."""
+
+        assert self.actor is not None, "Actor not defined."
+
+        if key.keyword:
+            is_valid = str(key.keyword.values[0]).lower() != key.keyword[0].invalid
+            if not is_valid:
+                self._set_unknown(f"Invalid state for lamp {self.name!r}.")
+                return
+
+        state_value = key.value[0]
+        if isinstance(state_value, (bool, int)):
+            self._on() if bool(state_value) else self._off()
+        elif isinstance(state_value, str):
+            self._on() if bool(state_value) else self._off()
+        else:
+            self._set_unknown(f"Invalid state {state_value!r} for lamp {self.name!r}.")
+
+    async def update(self):
+        """Updates the state of the lamp."""
+
+        if self.actor is None:
+            self._set_unknown(f"No actor available. Cannot command lamp {self.name!r}.")
+            return
+
+        cmd = await self.actor.send_command(self.actor_name, self.command_status)
+        if cmd.status.did_fail:
+            self._set_unknown(f"Failed getting status for lamp {self.name!r}.")
+            return
+
+    async def set_state(self, state: bool):
+        """Sets the state of the lamp."""
+
+        if self.actor is None:
+            self._set_unknown(f"No actor available. Cannot command lamp {self.name!r}.")
+            return
+
+        cmd = await self.actor.send_command(
+            self.actor_name,
+            self.command_on if state else self.command_off,
+        )
+        if cmd.status.did_fail:
+            self._set_unknown(f"Failed setting state for lamp {self.name!r}.")
+            return
 
 
 @dataclass
@@ -226,12 +303,12 @@ class M2Controller:
                 m2_lamp.relay = index + 1
 
             if status_id == "0":
-                m2_lamp.set_off()
+                m2_lamp._off()
             elif status_id == "1":
-                m2_lamp.set_on()
+                m2_lamp._on()
             else:
                 # Use off because logic is similar but do not notify yet.
-                m2_lamp.set_off()
+                m2_lamp._off()
                 m2_lamp.state = LampState.UNKNOWN
 
     async def set_state(self, lamp: M2Lamp, state: bool):
@@ -269,11 +346,14 @@ class LampsController:
         self,
         m2_params: tuple[str, int] | None = None,
         lamps: dict[str, dict] = {},
+        actor: LCOLampsActor | None = None,
     ):
         if m2_params:
             self.m2_controller = M2Controller(self, *m2_params)
         else:
             self.m2_controller = None
+
+        self.actor = actor
 
         self.lamps: dict[str, Lamp] = {}
         if lamps:
@@ -301,7 +381,7 @@ class LampsController:
         if mode == "m2":
             lamp = M2Lamp(name=name, **lamp_kwargs)
         elif mode == "actor":
-            lamp = ActorLamp(name=name, **lamp_kwargs)
+            lamp = ActorLamp(name=name, actor=self.actor, **lamp_kwargs)
         else:
             raise ValueError('Invalid mode. Must be "m2" or "actor".')
 
@@ -314,6 +394,14 @@ class LampsController:
 
         if self.m2_controller is not None:
             await self.m2_controller.update()
+
+        await asyncio.gather(
+            *[
+                lamp.update()
+                for lamp in self.lamps.values()
+                if isinstance(lamp, ActorLamp)
+            ]
+        )
 
     async def set_state(
         self,
@@ -346,7 +434,10 @@ class LampsController:
                 raise RuntimeError("No M2 controller defined.")
             await self.m2_controller.set_state(lamp, state)
 
-        if state:
-            lamp.set_on(warm_up_time=warm_up_time)
+        elif isinstance(lamp, ActorLamp):
+            await lamp.set_state(state)
+
+        if state is True:
+            lamp._on(warm_up_time=warm_up_time)
         else:
-            lamp.set_off()
+            lamp._off()

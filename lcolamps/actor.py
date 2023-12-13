@@ -44,15 +44,20 @@ class LCOLampsActor(LegacyActor):
         else:
             m2_params = None
 
-        self.controller = LampsController(m2_params=m2_params, lamps=config["lamps"])
+        self.controller = LampsController(
+            m2_params=m2_params,
+            lamps=config["lamps"],
+            actor=self,
+        )
         self.parser_args = [self.controller]
 
     async def start(self: T, **kwargs) -> T:
         """Starts the lamps controller and actor."""
 
+        await super().start(**kwargs)
         await self.controller.update()
 
-        return await super().start(**kwargs)
+        return self
 
 
 LampsCommand = Command[LCOLampsActor]

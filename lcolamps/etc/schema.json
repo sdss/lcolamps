@@ -1,12 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
+  "$defs": {
+    "lamp_states": {
+      "type": "string",
+      "enum": ["ON", "OFF", "WARMING", "UNKNOWN"]
+    }
+  },
   "properties": {
-    "SQM": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
-    "FF": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
-    "Laser": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
-    "HeAr": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
-    "Ne": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] }
+    "SQM": { "$ref": "#/$defs/lamp_states" },
+    "FF": { "$ref": "#/$defs/lamp_states" },
+    "Laser": { "$ref": "#/$defs/lamp_states" },
+    "HeAr": { "$ref": "#/$defs/lamp_states" },
+    "Ne": { "$ref": "#/$defs/lamp_states" },
+    "TCS_FF": { "$ref": "#/$defs/lamp_states" }
   },
   "additionalProperties": true
 }

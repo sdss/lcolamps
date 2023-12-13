@@ -27,3 +27,11 @@ lamps:
     mode: m2
     warm_up_time: 0
     m2_name: Lsr
+  TCS_FF:
+    mode: actor
+    warm_up_time: 10
+    actor_name: lcotcc
+    command_on: ff on
+    command_off: ff off
+    command_status: ff status
+    status_keyword: ffLamp
