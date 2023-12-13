@@ -73,7 +73,7 @@ async def on(
     warm_up_time = warmup or lamp.warm_up_time
 
     try:
-        await controller.set(lamp_name, True, warm_up_time=warmup)
+        await controller.set_state(lamp_name, True, warm_up_time=warmup)
     except Exception as err:
         return command.fail(f"Failed turning on lamp {lamp.name}: {err}")
 
@@ -123,24 +123,21 @@ async def off(
 ):
     """Turns off a lamp."""
 
-    if all_lamps is True:
+    if all_lamps is True or lamp_name is None:
         results = await asyncio.gather(
-            *[controller.set(lamp_name, False) for lamp_name in controller.lamps],
+            *[controller.set_state(lamp_name, False) for lamp_name in controller.lamps],
             return_exceptions=True,
         )
         replies = {}
         for ii in range(len(controller.lamps)):
-            name = list(controller.lamps)[ii]
+            lamp = list(controller.lamps.values())[ii]
             if isinstance(results[ii], Exception):
-                command.error(f"Failed turning off lamp {name}.")
+                command.error(f"Failed turning off lamp {lamp.name}: {results[ii]!s}.")
                 continue
-            replies[name] = "OFF"
+            replies[lamp.name] = "OFF"
         if len(replies) > 0:
             command.info(**replies)
         return command.finish()
-
-    if lamp_name is None:
-        return command.fail("A lamp name is required.")
 
     if lamp_name.lower() not in controller.lamps:
         return command.fail(f"Unknown {lamp_name} lamp.")
@@ -149,7 +146,7 @@ async def off(
     lamp = controller.lamps[lamp_name]
 
     try:
-        await controller.set(lamp_name, False)
+        await controller.set_state(lamp_name, False)
     except Exception as err:
         return command.fail(f"Failed turning on lamp {lamp.name}: {err}")
 
