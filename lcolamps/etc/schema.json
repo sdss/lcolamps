@@ -8,5 +8,5 @@
     "HeAr": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] },
     "Ne": { "type": "string", "enum": ["ON", "OFF", "WARMING", "UNKNOWN"] }
   },
-  "additionalProperties": false
+  "additionalProperties": true
 }

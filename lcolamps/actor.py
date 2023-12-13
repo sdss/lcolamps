@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import pathlib
+from os import PathLike
 
 from typing import TypeVar
 
@@ -18,7 +19,7 @@ from clu.legacy import LegacyActor
 from lcolamps import OBSERVATORY, __version__, config
 from lcolamps.controller import LampsController
 
-from .commands import lamps_parser  # noqa
+from .commands import lamps_parser
 
 
 T = TypeVar("T", bound="LCOLampsActor")
@@ -29,16 +30,17 @@ class LCOLampsActor(LegacyActor):
 
     parser = lamps_parser
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, schema: str | PathLike | None = None, **kwargs):
         self.observatory = OBSERVATORY
 
-        super().__init__(*args, **kwargs)
-        self.load_schema(str(pathlib.Path(__file__).parent / "etc/schema.json"))
+        schema = schema or pathlib.Path(__file__).parent / "etc/schema.json"
+
+        super().__init__(*args, schema=schema, **kwargs)
 
         self.version = __version__
 
-        if 'm2' in config:
-            m2_params = (config['m2.host'], config['m2.port'])
+        if "m2" in config:
+            m2_params = (config["m2.host"], config["m2.port"])
         else:
             m2_params = None
 
