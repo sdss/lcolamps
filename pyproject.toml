@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdss-lcolamps"
-version = "1.0.0a0"
+version = "1.0.0"
 description = "A library to control the LCO M2 lamps."
 authors = ["José Sánchez-Gallego <gallegoj@uw.edu>"]
 license = "BSD-3-Clause"
@@ -40,7 +40,6 @@ pytest-asyncio = ">=0.10.0"
 pytest-cov = ">=2.8.1"
 pytest-mock = ">=1.13.0"
 pytest-sugar = ">=0.9.2"
-codecov = ">=2.0.15"
 coverage = {version = ">=5.0", extras = ["toml"]}
 ipdb = ">=0.12.3"
 black = ">=20.8b1"
