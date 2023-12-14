@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import pathlib
 from os import PathLike
 
@@ -15,6 +16,7 @@ from typing import TypeVar
 
 from clu import Command
 from clu.legacy import LegacyActor
+from sdsstools import cancel_task
 
 from lcolamps import OBSERVATORY, __version__, config
 from lcolamps.controller import LampsController
@@ -35,7 +37,11 @@ class LCOLampsActor(LegacyActor):
 
         schema = schema or pathlib.Path(__file__).parent / "etc/schema.json"
 
-        super().__init__(*args, schema=schema, **kwargs)
+        models = kwargs.pop("models", [])
+        if self.name not in models:
+            models.append(self.models)
+
+        super().__init__(*args, schema=schema, models=models, **kwargs)
 
         self.version = __version__
 
@@ -51,13 +57,35 @@ class LCOLampsActor(LegacyActor):
         )
         self.parser_args = [self.controller]
 
+        self._monitor_lamps_task: asyncio.Task | None = None
+
     async def start(self: T, **kwargs) -> T:
         """Starts the lamps controller and actor."""
 
         await super().start(**kwargs)
         await self.controller.update()
 
+        self._monitor_lamps_task = asyncio.create_task(self.monitor_lamps())
+
         return self
+
+    async def stop(self):
+        """Stops the actor."""
+
+        await cancel_task(self._monitor_lamps_task)
+        return await super().stop()
+
+    async def monitor_lamps(self):
+        """Monitors the lamps and updates the status."""
+
+        while True:
+            for lamp in self.controller.lamps.values():
+                current_keyword_state = self.models[self.name][lamp.name][0]
+                lamp_state_name = lamp.state.name.upper()
+                if lamp_state_name != current_keyword_state:
+                    self.write("i", {lamp.name: lamp_state_name})
+
+            await asyncio.sleep(1)
 
 
 LampsCommand = Command[LCOLampsActor]

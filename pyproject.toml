@@ -30,7 +30,7 @@ lcolamps = "lcolamps.__main__:lcolamps"
 [tool.poetry.dependencies]
 python = "^3.10,<4"
 sdss-clu = "^2.0.0"
-sdsstools = "^1.0.0"
+sdsstools = "^1.6.0"
 click_default_group = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
