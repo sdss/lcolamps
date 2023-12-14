@@ -38,8 +38,9 @@ class LCOLampsActor(LegacyActor):
         schema = schema or pathlib.Path(__file__).parent / "etc/schema.json"
 
         models = kwargs.pop("models", [])
-        if self.name not in models:
-            models.append(self.models)
+        name = kwargs.get("name", "lcolamps")
+        if name not in models:
+            models.append(name)
 
         super().__init__(*args, schema=schema, models=models, **kwargs)
 
