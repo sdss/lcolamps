@@ -29,7 +29,7 @@ lamps:
     m2_name: Lsr
   TCS_FF:
     mode: actor
-    warm_up_time: 10
+    warm_up_time: 0
     actor_name: lcotcc
     command_on: ff on
     command_off: ff off
