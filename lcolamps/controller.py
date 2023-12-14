@@ -141,10 +141,9 @@ class ActorLamp(Lamp):
     def _set_unknown(self, msg: str | None = None):
         """Sets the state to UNKNOWN."""
 
-        if msg:
-            warnings.warn(msg, UserWarning)
-
         self.state = LampState.UNKNOWN
+
+        raise RuntimeError(msg or None)
 
     def _update_state(self, key: TronKey):
         """Sets the state of the lamp based on the lamp keyword."""
@@ -175,7 +174,6 @@ class ActorLamp(Lamp):
         cmd = await self.actor.send_command(self.actor_name, self.command_status)
         if cmd.status.did_fail:
             self._set_unknown(f"Failed getting status for lamp {self.name!r}.")
-            return
 
     async def set_state(self, state: bool):
         """Sets the state of the lamp."""
@@ -190,7 +188,6 @@ class ActorLamp(Lamp):
         )
         if cmd.status.did_fail:
             self._set_unknown(f"Failed setting state for lamp {self.name!r}.")
-            return
 
 
 @dataclass
