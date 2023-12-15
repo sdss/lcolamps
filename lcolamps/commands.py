@@ -124,8 +124,12 @@ async def off(
     """Turns off a lamp."""
 
     if all_lamps is True or lamp_name is None:
+        await controller.update()
         results = await asyncio.gather(
-            *[controller.set_state(lamp_name, False) for lamp_name in controller.lamps],
+            *[
+                controller.set_state(lamp_name, False, update_status=False)
+                for lamp_name in controller.lamps
+            ],
             return_exceptions=True,
         )
         replies = {}

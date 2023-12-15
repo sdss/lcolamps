@@ -405,6 +405,7 @@ class LampsController:
         lamp_name,
         state: bool,
         warm_up_time: float | None = None,
+        update_status: bool = True,
     ):
         """Sets a lamp on or off."""
 
@@ -414,7 +415,8 @@ class LampsController:
         lamp_name = lamp_name.lower()
         lamp = self.lamps[lamp_name]
 
-        await self.update()
+        if update_status:
+            await self.update()
 
         if state and (lamp.state & (LampState.ON | LampState.WARMING)):
             return
