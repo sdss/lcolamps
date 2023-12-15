@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 - December 15, 2023
+
+### 🔧 Fixed
+
+- Avoid multiple calls to `update()`` when turning off all lamps.
+
+
 ## 1.0.0 - December 14, 2023
 
 ### 🚀 New
