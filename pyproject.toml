@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sdss-lcolamps"
-version = "1.0.1"
+version = "1.0.2a0"
 description = "A library to control the LCO M2 lamps."
 authors = ["José Sánchez-Gallego <gallegoj@uw.edu>"]
 license = "BSD-3-Clause"
