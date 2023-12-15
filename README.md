@@ -1,8 +1,7 @@
 # lcolamps
 
-![Versions](https://img.shields.io/badge/python->3.7-blue)
+![Versions](https://img.shields.io/badge/python->3.10-blue)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Documentation Status](https://readthedocs.org/projects/sdss-lcolamps/badge/?version=latest)](https://sdss-lcolamps.readthedocs.io/en/latest/?badge=latest)
 [![Test status](https://github.com/sdss/lcolamps/actions/workflows/test.yml/badge.svg)](https://github.com/sdss/lcolamps/actions/workflows/test.yml)
 
 A library to control the LCO M2 lamps.
