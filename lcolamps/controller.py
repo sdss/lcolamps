@@ -48,6 +48,7 @@ class Lamp:
 
     def __post_init__(self):
         self.state: LampState = LampState.UNKNOWN
+        self.on_time: float | None = None
 
         self._last_switched_on: float = time()
         self._warmup_task: asyncio.Task | None = None
@@ -74,6 +75,7 @@ class Lamp:
         self._warm_up_task = asyncio.create_task(self._warm_up(warm_up_time))
 
         self._last_switched_on = time()
+        self.on_time = time()
 
     def _off(self):
         """Sets the lamp as off.
@@ -88,6 +90,7 @@ class Lamp:
 
         self.state = LampState.OFF
         self._last_switched_on = time()
+        self.on_time = None
 
         if self._warmup_task is not None:
             self._warmup_task.cancel()
