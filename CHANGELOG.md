@@ -1,5 +1,12 @@
 # Changelog
 
+## Next version
+
+### ✨ Improved
+
+- Allow to specify a delay between consecutive switcehs on-off or off-on of a lamp.
+
+
 ## 1.0.1 - December 15, 2023
 
 ### 🔧 Fixed

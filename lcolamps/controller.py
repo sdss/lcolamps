@@ -41,14 +41,15 @@ class Lamp:
     """One of the connected lamps."""
 
     name: str
-    warm_up_time: float = 0
+    warm_up_time: float = 0.0
+    delay: float = 0.0
 
     mode: ClassVar[str]
 
     def __post_init__(self):
-        self.on_time: float | None = None
         self.state: LampState = LampState.UNKNOWN
 
+        self._last_switched_on: float = time()
         self._warmup_task: asyncio.Task | None = None
 
     def _on(self, warm_up_time: float | None = None):
@@ -72,7 +73,7 @@ class Lamp:
         warm_up_time = warm_up_time or self.warm_up_time
         self._warm_up_task = asyncio.create_task(self._warm_up(warm_up_time))
 
-        self.on_time = time()
+        self._last_switched_on = time()
 
     def _off(self):
         """Sets the lamp as off.
@@ -86,7 +87,7 @@ class Lamp:
             return
 
         self.state = LampState.OFF
-        self.on_time = None
+        self._last_switched_on = time()
 
         if self._warmup_task is not None:
             self._warmup_task.cancel()
@@ -99,6 +100,14 @@ class Lamp:
 
         self.state = LampState.ON
         self._warmup_task = None
+
+    async def _wait_delay(self):
+        """Blocks until the delay has passed and the lamp can be switched."""
+
+        while True:
+            if time() - self._last_switched_on > self.delay:
+                break
+            await asyncio.sleep(0.1)
 
 
 @dataclass(kw_only=True)
@@ -414,6 +423,11 @@ class LampsController:
 
         lamp_name = lamp_name.lower()
         lamp = self.lamps[lamp_name]
+
+        # Wait until the delay has passed. We do this before the update because if
+        # we have switched the lamp on and off too quickly, the status may not reflect
+        # the actual state.
+        await lamp._wait_delay()
 
         if update_status:
             await self.update()

@@ -15,18 +15,22 @@ lamps:
     mode: m2
     warm_up_time: 0
     m2_name: Apg
+    delay: 3
   HeAr:
     mode: m2
     warm_up_time: 10
     m2_name: HeAr
+    delay: 3
   Ne:
     mode: m2
     warm_up_time: 10
     m2_name: Ne
+    delay: 3
   Laser:
     mode: m2
     warm_up_time: 0
     m2_name: Lsr
+    delay: 3
   TCS_FF:
     mode: actor
     warm_up_time: 0
@@ -35,3 +39,4 @@ lamps:
     command_off: ff off
     command_status: ff status
     status_keyword: ffLamp
+    delay: 4
