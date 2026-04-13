@@ -35,7 +35,7 @@ click_default_group = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
 ipython = ">=8.0.0"
-pytest = ">=5.2.2"
+pytest = ">=9.0.3"
 pytest-asyncio = ">=0.10.0"
 pytest-cov = ">=2.8.1"
 pytest-mock = ">=1.13.0"
